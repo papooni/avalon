@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 46% 10%;
+    --foreground: 40 41% 88%;
+    --primary: 39 59% 63%;
+    --primary-foreground: 220 46% 8%;
+    --secondary: 222 44% 16%;
+    --secondary-foreground: 40 41% 88%;
+    --muted: 222 35% 18%;
+    --muted-foreground: 222 18% 70%;
+    --destructive: 352 52% 47%;
+    --destructive-foreground: 40 41% 95%;
+    --border: 222 34% 25%;
+    --input: 222 34% 25%;
+    --ring: 39 59% 63%;
+    color-scheme: dark;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    background: #090f1b;
+  }
+
+  body {
+    @apply bg-night font-body text-parchment antialiased;
+    min-height: 100dvh;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(217, 178, 106, 0.10), transparent 60%),
+      radial-gradient(ellipse 60% 40% at 50% 110%, rgba(91, 140, 224, 0.08), transparent 70%);
+    background-attachment: fixed;
+    line-height: 1.55;
+  }
+
+  h1, h2, h3 {
+    @apply font-display tracking-[0.01em] text-parchment;
+    line-height: 1.15;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-gilt ring-offset-2 ring-offset-night;
+  }
+
+  ::selection {
+    background: rgba(217, 178, 106, 0.35);
+  }
+}
+
+@layer components {
+  .glass {
+    @apply rounded-lg border border-white/[0.07] bg-night-raised/70 shadow-lift backdrop-blur-md;
+  }
+  .safe-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  .safe-top {
+    padding-top: max(0.5rem, env(safe-area-inset-top));
+  }
+  .hairline {
+    @apply border-t border-white/[0.06];
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

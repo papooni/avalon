@@ -1,0 +1,4 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": { "baseUrl": "..", "paths": { "vitest": ["scripts/vitest-shim.ts"], "@/*": ["src/*"] } }
+}

@@ -1,0 +1,185 @@
+// Persistence model for the Avalon server.
+// Hidden information policy:
+//   * Room.encryptedSnapshot holds the full authoritative state, AES-256-GCM encrypted.
+//   * RoleAssignment is the only plaintext table containing roles. It is never read
+//     by request handlers; it exists for post-game recaps and audits.
+//   * Vote rows are inserted only after a vote is revealed.
+//   * QuestSubmission has no card column on purpose: authorship of cards is never stored.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Room {
+  id                String    @id @default(uuid())
+  code              String    @unique
+  hostPlayerId      String?
+  settings          Json
+  gameNumber        Int       @default(0)
+  encryptedSnapshot String
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  closedAt          DateTime?
+  players           Player[]
+  games             Game[]
+}
+
+model Player {
+  id               String            @id
+  roomId           String
+  name             String
+  avatar           String
+  isSpectator      Boolean           @default(false)
+  ready            Boolean           @default(false)
+  joinedAt         DateTime          @default(now())
+  removedAt        DateTime?
+  room             Room              @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  sessions         PlayerSession[]
+  reconnectTokens  ReconnectToken[]
+  roleAssignments  RoleAssignment[]
+  votes            Vote[]
+  questSubmissions QuestSubmission[]
+
+  @@index([roomId])
+}
+
+/// One row per live connection, for diagnostics. No secrets.
+model PlayerSession {
+  id             String    @id @default(uuid())
+  playerId       String
+  socketId       String?
+  connectedAt    DateTime  @default(now())
+  disconnectedAt DateTime?
+  player         Player    @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId])
+}
+
+/// Only the SHA-256 hash of the bearer token is stored.
+model ReconnectToken {
+  id        String    @id @default(uuid())
+  playerId  String
+  tokenHash String    @unique
+  createdAt DateTime  @default(now())
+  expiresAt DateTime
+  revokedAt DateTime?
+  player    Player    @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId])
+}
+
+model Game {
+  id              String             @id
+  roomId          String
+  number          Int
+  phase           String
+  version         Int
+  winner          String?
+  winReason       String?
+  startedAt       DateTime           @default(now())
+  endedAt         DateTime?
+  room            Room               @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  configuration   GameConfiguration?
+  roleAssignments RoleAssignment[]
+  rounds          Round[]
+  proposals       TeamProposal[]
+  events          GameEvent[]
+
+  @@unique([roomId, number])
+}
+
+model GameConfiguration {
+  id                   String   @id @default(uuid())
+  gameId               String   @unique
+  optionalRoles        String[]
+  assassinationTargets String
+  revealRolesAtEnd     Boolean
+  playerCount          Int
+  game                 Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+}
+
+model RoleAssignment {
+  id       String @id @default(uuid())
+  gameId   String
+  playerId String
+  roleId   String
+  seat     Int
+  game     Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  player   Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([gameId, playerId])
+}
+
+model Round {
+  id               String            @id @default(uuid())
+  gameId           String
+  questIndex       Int
+  teamSize         Int
+  failsRequired    Int
+  result           String?
+  successCount     Int?
+  failCount        Int?
+  revealedCards    String[]
+  game             Game              @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  questSubmissions QuestSubmission[]
+
+  @@unique([gameId, questIndex])
+}
+
+model TeamProposal {
+  id             String   @id @default(uuid())
+  gameId         String
+  proposalNumber Int
+  questIndex     Int
+  attempt        Int
+  leaderId       String
+  team           String[]
+  approved       Boolean?
+  createdAt      DateTime @default(now())
+  game           Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  votes          Vote[]
+
+  @@unique([gameId, proposalNumber])
+}
+
+model Vote {
+  id         String       @id @default(uuid())
+  proposalId String
+  playerId   String
+  approve    Boolean
+  revealedAt DateTime     @default(now())
+  proposal   TeamProposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  player     Player       @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([proposalId, playerId])
+}
+
+/// Records that a player went on a quest. Deliberately has no card column.
+model QuestSubmission {
+  id          String   @id @default(uuid())
+  roundId     String
+  playerId    String
+  submittedAt DateTime @default(now())
+  round       Round    @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  player      Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([roundId, playerId])
+}
+
+/// Public engine events only (see EngineEvent). Never contains roles or private choices.
+model GameEvent {
+  id        BigInt   @id @default(autoincrement())
+  gameId    String
+  seq       Int
+  type      String
+  payload   Json
+  createdAt DateTime @default(now())
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@unique([gameId, seq])
+}

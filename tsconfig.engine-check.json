@@ -1,0 +1,1 @@
+{"extends":"./tsconfig.json","compilerOptions":{"plugins":[],"incremental":false,"types":[],"paths":{"vitest":["./scripts/vitest-shim.ts"],"@/*":["./src/*"]}},"include":["src/engine/**/*.ts","scripts/vitest-shim.ts"],"exclude":[]}
