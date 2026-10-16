@@ -4,7 +4,15 @@ import { RoleSigil, QuestSeal } from '@/components/game/Art';
 import { PLAYER_COUNT_RULES } from '@/engine';
 import { ROLE_COPY } from '@/lib/branding';
 
-export const metadata: Metadata = { title: 'How to play' };
+const description =
+  'Learn Avalon Night in two minutes: how quests, team votes and the final assassination work, every role from Merlin to Oberon, and team sizes for 5 to 10 players.';
+
+export const metadata: Metadata = {
+  title: 'How to play: rules and roles',
+  description,
+  alternates: { canonical: '/rules' },
+  openGraph: { title: 'How to play Avalon Night', description, url: '/rules' },
+};
 
 const SECTIONS = [
   {
