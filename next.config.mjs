@@ -30,6 +30,14 @@ const nextConfig = {
           { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
         ],
       },
+      // Private game rooms and the demo must never show up in search results.
+      { source: '/room/:path*', headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }] },
+      { source: '/demo', headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }] },
+      // Let browsers and CDNs cache icons and social images (hashed /_next/static is already immutable).
+      {
+        source: '/:file(favicon.svg|apple-icon|opengraph-image|twitter-image|manifest.webmanifest)',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=86400, stale-while-revalidate=604800' }],
+      },
     ];
   },
 };
