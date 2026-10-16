@@ -19,7 +19,7 @@ services:
     environment:
       PORT: 3000
       DATABASE_URL: postgresql://avalon:avalon@db:5432/avalon?schema=public
-      ALLOWED_ORIGINS: http://localhost:3000
+      ALLOWED_ORIGINS: https://avalon.sytes.net,http://avalon.sytes.net,http://avalon.sytes.net:3000,http://localhost:3000
       SNAPSHOT_ENCRYPTION_KEY: ${SNAPSHOT_ENCRYPTION_KEY:?Set SNAPSHOT_ENCRYPTION_KEY in your shell or .env}
       LOG_LEVEL: info
 
